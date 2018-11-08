@@ -1,6 +1,6 @@
 # Using Boost.Hana to simplify the generation of Python bindings<a id="sec-1"></a>
 
-Recently, I have written Python bindings for a number of software libraries I work on. For this, I have used the excellent [pybind11](https://github.com/pybind/pybind11), which makes it easy to provide bindings for basic C++ functions and classes. For example, the example code to generate bindings for functions and classes is:
+Recently, I have implemented Python bindings for a number of software libraries I work on. For this, I have used the excellent [pybind11](https://github.com/pybind/pybind11), which makes it easy to provide bindings for basic C++ functions and classes. Generating bindings for functions and classes looks like this:
 
 ```cpp
 // bindings for a function
@@ -9,7 +9,7 @@ m.def("add", &add, "A function which adds two numbers");
 py::class_<Pet>(m, "Pet").def(py::init<const std::string &>())
 ```
 
-I ran into two related problems for two different projects, and in both cases these problems lead to lengthy binding definitions with a lot of repeated code.
+While writing these bindings, I ran into two problems for two different projects, and in both cases they lead to lengthy binding definitions with a lot of repeated code.
 
 ## Problem 1: *Many aggregate data types*<a id="sec-1-1"></a>
 
@@ -53,7 +53,7 @@ Of course in reality packets typically have more than two fields. The binding co
 
 ## Problem 2: *Templates*<a id="sec-1-2"></a>
 
-Another problem is when you want to generate bindings to templates. In another project, I had many classes that were generic over two parameters: one integer that defines the dimension of the object or problem, and one type parameter representing the scalar type that is used (typically `float` or `double`, but maybe in some cases half precision or even quadruple precision floats). An example class template is the following.
+A second problem is when you want to generate bindings to templates. In another project, I had many classes and functions that were generic over two parameters: one integer that defines the dimension of the object or problem, and one type parameter representing the scalar type that is used (typically `float` or `double`, but maybe in some cases half precision or even quadruple precision floats). An example class template is the following.
 
 ```cpp
 template <int D, typename T>
@@ -87,7 +87,7 @@ With *Boost.Hana*, it is possible to write concise and maintainable Python bindi
 
 ### Automatically binding user-defined types<a id="sec-1-3-1"></a>
 
-First, let us focus on generating bindings to simple user-defined types. In order to avoid listing the (types of the) fields when generating the bindings, we need to be able to *inspect* our data types programatically. This *introspecftion* of user-defined types is supported by Boost.Hana using either of two macro's.
+First, let us focus on generating bindings to simple user-defined types. In order to avoid listing the (types of the) fields when generating the bindings, we need to be able to *inspect* our data types programmatically. This *introspection* of user-defined types is supported by Boost.Hana using either of two macro's.
 
 `BOOST_HANA_DEFINE_STRUCT` can be used within the original definition of a struct, or `BOOST_HANA_ADAPT_STRUCT` can be used outside of the original definition (if you cannot, or understandably do not want to touch the definition of your data types). In our example, this would look like this:
 
@@ -107,7 +107,7 @@ struct AnotherPacket {
 }
 ```
 
-Now, we have the possibility to do something with our members. This can also simplify code in other places. For example, these network packets have to be serialized, deserialized and measured for size. This can now all be implemented in a function with a one-line body!
+Now, we have the possibility to loop over the members fields of our packets. This can also simplify code in other places. For example, these network packets have to be serialized, deserialized and measured for size. This can now all be implemented in a function with a one-line body!
 
 ```cpp
 template <typename Packet, typename Buffer>
@@ -116,7 +116,7 @@ void fill(Packet& packet, Buffer& buffer) {
 }
 ```
 
-Here, `Buffer` is a an object (`serializer`, `deserializer`, or a `scale`) that implements `operator|` for all the possible field types. But these individual functions do not have to be implemented for each packet. With the `for_each` function, we are able to loop over all `(name, value)` pairs for the member fields of our packets.
+Here, `Buffer` is a an class (`serializer`, `deserializer`, or a `scale`) that implements `operator|` for all the possible field types. However, these individual functions do not have to be implemented for each packet. With the `for_each` function, we are able to loop over all `(name, value)` pairs for the member fields of our packets.
 
 Going back to the Python bindings, being able to loop over all member fields means we no longer have to explicitly list constructors and accessors. We can generate them automatically!
 
