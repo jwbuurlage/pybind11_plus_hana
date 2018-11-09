@@ -116,7 +116,7 @@ void fill(Packet& packet, Buffer& buffer) {
 }
 ```
 
-Here, `Buffer` is a an class (`serializer`, `deserializer`, or a `scale`) that implements `operator|` for all the possible field types. However, these individual functions do not have to be implemented for each packet. With the `for_each` function, we are able to loop over all `(name, value)` pairs for the member fields of our packets.
+Here, `Buffer` is a class (`serializer`, `deserializer`, or a `scale`) that implements `operator|` for all the possible field types. However, these individual functions do not have to be implemented for each packet. With the `for_each` function, we are able to loop over all `(name, value)` pairs for the member fields of our packets.
 
 Going back to the Python bindings, being able to loop over all member fields means we no longer have to explicitly list constructors and accessors. We can generate them automatically!
 
